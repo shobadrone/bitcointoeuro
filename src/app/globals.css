@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #121212;
+  --card-background: #1E1E1E;
+  --foreground: #EDEDED;
+  --muted: #888888;
+  --accent: #3B82F6;
+  --accent-light: #93C5FD;
+  --success: #10B981;
+  --error: #EF4444;
+  --border: #333333;
+  --font-bebas-neue: 'Bebas Neue', sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+  }
+  
+  h1 {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700;
+  }
+  
+  @media (min-width: 640px) {
+    h1 {
+      font-size: 2.25rem; /* text-4xl */
+    }
+  }
+  
+  h2 {
+    font-size: 1.5rem; /* text-2xl */
+  }
+  
+  @media (min-width: 640px) {
+    h2 {
+      font-size: 1.875rem; /* text-3xl */
+    }
+  }
+  
+  h3 {
+    font-size: 1.25rem; /* text-xl */
+  }
+  
+  @media (min-width: 640px) {
+    h3 {
+      font-size: 1.5rem; /* text-2xl */
+    }
+  }
+}
+
+@layer components {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80rem;
+  }
+  
+  .card {
+    background-color: var(--card-background);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    padding: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .card {
+      padding: 1.5rem;
+    }
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition-property: all;
+    transition-duration: 200ms;
+    font-weight: 600;
+  }
+  
+  .btn-primary {
+    background-color: var(--accent);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--accent-light);
+  }
+  
+  .btn-outline {
+    border: 1px solid var(--border);
+  }
+  
+  .btn-outline:hover {
+    background-color: var(--card-background);
+  }
+}
