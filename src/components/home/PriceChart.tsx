@@ -73,11 +73,24 @@ export default function PriceChart() {
   useEffect(() => {
     // Small delay to ensure other hooks have initialized
     const timer = setTimeout(() => {
+      console.log('[DEBUG] PriceChart: Triggering initial data fetch');
+      console.log('[DEBUG] ENV VAR CHECK:', process.env.NEXT_PUBLIC_LCW_API_KEY ? 'API key is set' : 'API key is NOT set');
       mutate();
     }, 100);
     
     return () => clearTimeout(timer);
   }, [mutate]);
+  
+  // Add detailed component state logging
+  useEffect(() => {
+    console.log('[DEBUG] PriceChart state:', {
+      selectedTimeFrame,
+      isLoading,
+      isDataLoading,
+      isError,
+      hasData: historicalData ? `${historicalData.data?.length || 0} points` : 'No data',
+    });
+  }, [selectedTimeFrame, isLoading, isDataLoading, isError, historicalData]);
 
   // Format data for Chart.js
   const formatChartData = () => {

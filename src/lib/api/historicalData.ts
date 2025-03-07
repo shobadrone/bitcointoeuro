@@ -22,6 +22,9 @@ export async function getHistoricalPriceData(
   timeFrame: TimeFrame,
   currentPrice?: BitcoinPriceData
 ): Promise<HistoricalPriceData> {
+  console.log('[DEBUG] getHistoricalPriceData called with timeFrame:', timeFrame);
+  console.log('[DEBUG] currentPrice available:', currentPrice ? 'yes' : 'no');
+  
   try {
     let days: number;
     let interval: string;
@@ -48,7 +51,9 @@ export async function getHistoricalPriceData(
         days = 60;
         interval = 'daily';
     }
-
+    
+    console.log('[DEBUG] Fetching from CoinGecko:', { days, interval });
+    
     const response = await axios.get(
       `${COINGECKO_API_URL}/coins/bitcoin/market_chart`,
       {
@@ -59,6 +64,13 @@ export async function getHistoricalPriceData(
         }
       }
     );
+    
+    console.log('[DEBUG] CoinGecko API response received:', {
+      status: response.status,
+      hasData: response.data ? 'yes' : 'no',
+      hasPrices: response.data?.prices ? 'yes' : 'no',
+      dataPointCount: response.data?.prices?.length || 0
+    });
 
     if (!response.data || !response.data.prices || !Array.isArray(response.data.prices)) {
       throw new Error('Invalid response from CoinGecko API');
@@ -113,8 +125,12 @@ export async function getHistoricalPriceDataFallback(
   timeFrame: TimeFrame,
   currentPrice?: BitcoinPriceData
 ): Promise<HistoricalPriceData> {
+  console.log('[DEBUG] Fallback function called for timeFrame:', timeFrame);
+  console.log('[DEBUG] LCW API KEY present:', process.env.NEXT_PUBLIC_LCW_API_KEY ? 'yes' : 'no');
+  
   try {
     // Get historical data from LiveCoinWatch
+    console.log('[DEBUG] Attempting to fetch data from LiveCoinWatch...');
     const priceData = await getLiveCoinWatchHistorical(timeFrame);
 
     // Calculate change percentage
