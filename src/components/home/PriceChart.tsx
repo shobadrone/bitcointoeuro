@@ -372,8 +372,39 @@ export default function PriceChart() {
               Try Again
             </button>
           </div>
+        ) : (!historicalData || !historicalData.data || historicalData.data.length === 0) ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            textAlign: 'center',
+            color: 'var(--error)'
+          }}>
+            <p>No chart data available.</p>
+            <button 
+              onClick={() => handleTimeFrameChange(selectedTimeFrame)}
+              style={{
+                backgroundColor: 'var(--accent)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                marginTop: '12px'
+              }}
+            >
+              Try Again
+            </button>
+          </div>
         ) : (
-          <Line data={formatChartData()} options={options} />
+          <>
+            <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px', fontSize: '10px' }}>
+              Debug: {historicalData.data.length} points | {selectedTimeFrame}
+            </div>
+            <Line data={formatChartData()} options={options} />
+          </>
         )}
       </div>
       
