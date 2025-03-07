@@ -61,7 +61,7 @@ export default function Hero() {
             >
               Use Calculator
             </a>
-            <a href="#about" 
+            <a href="#price-chart" 
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 color: 'var(--foreground)',
@@ -83,7 +83,7 @@ export default function Hero() {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              Learn More
+              Price Chart
             </a>
           </div>
         </div>

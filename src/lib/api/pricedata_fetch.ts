@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { getLiveCoinWatchPrice } from './livecoinwatch';
 
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
-const BITFINEX_API_URL = 'https://api-pub.bitfinex.com/v2';
 
 export interface BitcoinPriceData {
   eur: number;
@@ -26,29 +26,13 @@ export async function getBitcoinPrice(): Promise<BitcoinPriceData> {
   }
 }
 
-// Fallback function using Bitfinex API in case the main API is down
+// Fallback function using LiveCoinWatch API in case the main API is down
 export async function getBitcoinPriceFallback(): Promise<BitcoinPriceData> {
   try {
-    // Bitfinex ticker endpoint for BTC/EUR pair (tBTCEUR)
-    const response = await axios.get(
-      `${BITFINEX_API_URL}/ticker/tBTCEUR`
-    );
-    
-    if (!Array.isArray(response.data) || response.data.length < 7) {
-      throw new Error('Invalid response from Bitfinex API');
-    }
-    
-    // Bitfinex ticker format: [BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE]
-    const lastPrice = response.data[6];
-    const dailyChangePercentage = response.data[5] * 100; // Convert to percentage
-    
-    return {
-      eur: lastPrice,
-      eur_24h_change: dailyChangePercentage,
-      last_updated_at: Math.floor(Date.now() / 1000)
-    };
+    // Use LiveCoinWatch as fallback
+    return await getLiveCoinWatchPrice();
   } catch (error) {
-    console.error('Error fetching Bitcoin price from Bitfinex:', error);
+    console.error('Error fetching Bitcoin price from LiveCoinWatch:', error);
     throw error;
   }
 }

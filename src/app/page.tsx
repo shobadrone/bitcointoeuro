@@ -1,6 +1,7 @@
 import Hero from "@/components/home/Hero";
 import PriceDisplay from "@/components/home/PriceDisplay";
 import Calculator from "@/components/home/Calculator";
+import PriceChart from "@/components/home/PriceChart";
 import AboutSection from "@/components/home/AboutSection";
 import type { Metadata } from "next";
 
@@ -36,6 +37,15 @@ export default function Home() {
           backgroundColor: 'var(--background)'
         }}>
           <Calculator />
+        </section>
+        
+        <section id="price-chart" style={{ 
+          padding: '1rem 0 2rem', 
+          marginTop: '2.5rem',
+          position: 'relative',
+          backgroundColor: 'var(--background)'
+        }}>
+          <PriceChart />
         </section>
         
         <AboutSection />

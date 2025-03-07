@@ -148,7 +148,7 @@ export default function Footer() {
               </li>
               <li>
                 <a 
-                  href="https://www.bitfinex.com/" 
+                  href="https://www.livecoinwatch.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   style={{
@@ -161,7 +161,7 @@ export default function Footer() {
                   onMouseOver={(e) => e.currentTarget.style.color = 'var(--accent)'}
                   onMouseOut={(e) => e.currentTarget.style.color = 'var(--muted)'}
                 >
-                  Bitfinex API
+                  LiveCoinWatch API
                 </a>
               </li>
             </ul>

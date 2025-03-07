@@ -17,8 +17,26 @@ export default function useBitcoinPrice(refreshInterval = 60000) {
     fetcher,
     {
       refreshInterval, // Refresh every minute by default
-      revalidateOnFocus: true,
-      dedupingInterval: 15000, // Deduplicate requests within 15 seconds
+      revalidateOnFocus: false, // Don't revalidate on focus to reduce API calls
+      dedupingInterval: 30000, // Deduplicate requests within 30 seconds
+      focusThrottleInterval: 60000, // Throttle focus revalidation to once per minute
+      errorRetryCount: 3, // Only retry 3 times on error
+      
+      // Persist cache in localStorage to maintain price data between page loads
+      provider: () => {
+        // Define storage provider to persist cache in localStorage
+        const map = new Map(
+          JSON.parse(localStorage.getItem('bitcoin-price-cache') || '[]')
+        );
+        
+        // Before unloading the page, save the cache to localStorage
+        window.addEventListener('beforeunload', () => {
+          const appCache = JSON.stringify(Array.from(map.entries()));
+          localStorage.setItem('bitcoin-price-cache', appCache);
+        });
+        
+        return map;
+      }
     }
   );
 

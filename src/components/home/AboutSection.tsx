@@ -63,7 +63,6 @@ export default function AboutSection() {
               gap: '1rem'
             }}>
               {[
-                'Historical price trends and charts',
                 'Exchange rate comparisons across major platforms',
                 'Educational resources about Bitcoin and cryptocurrency'
               ].map((feature, index) => (
