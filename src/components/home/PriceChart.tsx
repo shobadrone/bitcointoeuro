@@ -14,7 +14,64 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import useHistoricalPrices from '@/lib/api/useHistoricalPrices';
-import { TimeFrame } from '@/lib/api/historicalData';
+import { TimeFrame, HistoricalPricePoint } from '@/lib/api/historicalData';
+
+// Simple fallback chart component that uses basic HTML/CSS/SVG when Chart.js fails
+const SimpleFallbackChart = ({ data }: { data: HistoricalPricePoint[] }) => {
+  if (!data || data.length === 0) return null;
+  
+  // Find min and max for scaling
+  const prices = data.map(point => point.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice;
+  
+  // Create a simple line path for the SVG
+  const svgWidth = 600;
+  const svgHeight = 280;
+  const padding = 20;
+  
+  // Generate path points
+  const points = data.map((point, index) => {
+    const x = padding + (index / (data.length - 1)) * (svgWidth - 2 * padding);
+    const y = svgHeight - padding - ((point.price - minPrice) / range) * (svgHeight - 2 * padding);
+    return `${x},${y}`;
+  }).join(' ');
+  
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
+        {/* Line chart */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="rgba(59, 130, 246, 0.8)"
+          strokeWidth="2"
+        />
+        
+        {/* Fill area under the line */}
+        <polygon
+          points={`${padding},${svgHeight - padding} ${points} ${svgWidth - padding},${svgHeight - padding}`}
+          fill="rgba(59, 130, 246, 0.1)"
+        />
+      </svg>
+      
+      {/* Optional: Display latest price text */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '10px', 
+        right: '10px',
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        color: 'white',
+        fontSize: '12px'
+      }}>
+        Latest: €{data[data.length - 1].price.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
+      </div>
+    </div>
+  );
+};
 
 // Register ChartJS components
 ChartJS.register(
@@ -403,7 +460,18 @@ export default function PriceChart() {
             <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px', fontSize: '10px' }}>
               Debug: {historicalData.data.length} points | {selectedTimeFrame}
             </div>
-            <Line data={formatChartData()} options={options} />
+            
+            {/* Fallback rendering if Chart.js canvas doesn't appear */}
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                <SimpleFallbackChart data={historicalData.data} />
+              </div>
+              
+              {/* Actual Chart.js component */}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2 }}>
+                <Line data={formatChartData()} options={options} />
+              </div>
+            </div>
           </>
         )}
       </div>
