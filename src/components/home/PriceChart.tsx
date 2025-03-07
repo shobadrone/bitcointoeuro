@@ -22,14 +22,14 @@ const SimpleFallbackChart = ({ data }: { data: HistoricalPricePoint[] }) => {
   
   // Find min and max for scaling
   const prices = data.map(point => point.price);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
+  const minPrice = Math.min(...prices) * 0.99; // Add 1% padding
+  const maxPrice = Math.max(...prices) * 1.01; // Add 1% padding
   const range = maxPrice - minPrice;
   
   // Create a simple line path for the SVG
   const svgWidth = 600;
   const svgHeight = 280;
-  const padding = 20;
+  const padding = 30; // Increased padding for axis labels
   
   // Generate path points
   const points = data.map((point, index) => {
@@ -38,9 +38,94 @@ const SimpleFallbackChart = ({ data }: { data: HistoricalPricePoint[] }) => {
     return `${x},${y}`;
   }).join(' ');
   
+  // Generate grid lines
+  const horizontalGridLines = [];
+  const gridLineCount = 5;
+  for (let i = 0; i <= gridLineCount; i++) {
+    const y = svgHeight - padding - (i / gridLineCount) * (svgHeight - 2 * padding);
+    horizontalGridLines.push(
+      <line 
+        key={`h-grid-${i}`}
+        x1={padding} 
+        y1={y} 
+        x2={svgWidth - padding} 
+        y2={y} 
+        stroke="rgba(75, 85, 99, 0.1)" 
+        strokeWidth="1"
+      />
+    );
+  }
+  
+  // Format price for axis labels
+  const formatEuro = (price: number) => {
+    if (price >= 10000) {
+      return `€${(price / 1000).toFixed(0)}k`;
+    } else {
+      return `€${price.toFixed(0)}`;
+    }
+  };
+  
+  // Generate price labels for y-axis
+  const yAxisLabels = [];
+  for (let i = 0; i <= gridLineCount; i++) {
+    const price = minPrice + (i / gridLineCount) * range;
+    const y = svgHeight - padding - (i / gridLineCount) * (svgHeight - 2 * padding);
+    yAxisLabels.push(
+      <text 
+        key={`y-label-${i}`}
+        x={padding - 5} 
+        y={y + 4} 
+        fontSize="10" 
+        textAnchor="end" 
+        fill="rgba(156, 163, 175, 0.9)"
+      >
+        {formatEuro(price)}
+      </text>
+    );
+  }
+  
+  // Generate date labels for x-axis (simplified to first, middle, last)
+  const xAxisLabels = [0, Math.floor(data.length / 2), data.length - 1].map((index) => {
+    const date = new Date(data[index].timestamp);
+    const formattedDate = date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short',
+      ...(data.length > 30 && { year: 'numeric' }) 
+    });
+    
+    const x = padding + (index / (data.length - 1)) * (svgWidth - 2 * padding);
+    return (
+      <text 
+        key={`x-label-${index}`}
+        x={x} 
+        y={svgHeight - padding + 15} 
+        fontSize="10" 
+        textAnchor="middle" 
+        fill="rgba(156, 163, 175, 0.9)"
+      >
+        {formattedDate}
+      </text>
+    );
+  });
+  
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
+        {/* Grid lines */}
+        {horizontalGridLines}
+        
+        {/* Y-axis labels */}
+        {yAxisLabels}
+        
+        {/* X-axis labels */}
+        {xAxisLabels}
+        
+        {/* Fill area under the line */}
+        <polygon
+          points={`${padding},${svgHeight - padding} ${points} ${svgWidth - padding},${svgHeight - padding}`}
+          fill="rgba(59, 130, 246, 0.1)"
+        />
+        
         {/* Line chart */}
         <polyline
           points={points}
@@ -49,14 +134,26 @@ const SimpleFallbackChart = ({ data }: { data: HistoricalPricePoint[] }) => {
           strokeWidth="2"
         />
         
-        {/* Fill area under the line */}
-        <polygon
-          points={`${padding},${svgHeight - padding} ${points} ${svgWidth - padding},${svgHeight - padding}`}
-          fill="rgba(59, 130, 246, 0.1)"
+        {/* Axis lines */}
+        <line 
+          x1={padding} 
+          y1={svgHeight - padding} 
+          x2={svgWidth - padding} 
+          y2={svgHeight - padding} 
+          stroke="rgba(75, 85, 99, 0.2)" 
+          strokeWidth="1"
+        />
+        <line 
+          x1={padding} 
+          y1={padding} 
+          x2={padding} 
+          y2={svgHeight - padding} 
+          stroke="rgba(75, 85, 99, 0.2)" 
+          strokeWidth="1"
         />
       </svg>
       
-      {/* Optional: Display latest price text */}
+      {/* Price change percentage */}
       <div style={{ 
         position: 'absolute', 
         top: '10px', 
@@ -67,7 +164,7 @@ const SimpleFallbackChart = ({ data }: { data: HistoricalPricePoint[] }) => {
         color: 'white',
         fontSize: '12px'
       }}>
-        Latest: €{data[data.length - 1].price.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
+        Latest: €{data[data.length - 1].price.toLocaleString('de-DE', { maximumFractionDigits: 0 })}
       </div>
     </div>
   );
@@ -138,6 +235,33 @@ export default function PriceChart() {
     return () => clearTimeout(timer);
   }, [mutate]);
   
+  // State to determine if Chart.js is working
+  const [chartJsWorks, setChartJsWorks] = useState<boolean | null>(null);
+  const chartJsContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Check if Chart.js is rendering after a short delay
+  useEffect(() => {
+    if (!historicalData?.data?.length) return;
+    
+    const timer = setTimeout(() => {
+      // If the Chart.js container has a canvas child, it's working
+      if (chartJsContainerRef.current) {
+        const canvas = chartJsContainerRef.current.querySelector('canvas');
+        const hasCanvas = !!canvas;
+        const canvasHasSize = canvas && (canvas.width > 0 || canvas.height > 0);
+        setChartJsWorks(hasCanvas && canvasHasSize);
+        console.log('[DEBUG] Chart.js check:', { 
+          hasCanvas, 
+          canvasHasSize,
+          width: canvas?.width,
+          height: canvas?.height
+        });
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [historicalData]);
+  
   // Add detailed component state logging
   useEffect(() => {
     console.log('[DEBUG] PriceChart state:', {
@@ -146,8 +270,9 @@ export default function PriceChart() {
       isDataLoading,
       isError,
       hasData: historicalData ? `${historicalData.data?.length || 0} points` : 'No data',
+      chartJsWorks,
     });
-  }, [selectedTimeFrame, isLoading, isDataLoading, isError, historicalData]);
+  }, [selectedTimeFrame, isLoading, isDataLoading, isError, historicalData, chartJsWorks]);
 
   // Format data for Chart.js
   const formatChartData = () => {
@@ -461,16 +586,38 @@ export default function PriceChart() {
               Debug: {historicalData.data.length} points | {selectedTimeFrame}
             </div>
             
-            {/* Fallback rendering if Chart.js canvas doesn't appear */}
+            {/* Chart container */}
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                <SimpleFallbackChart data={historicalData.data} />
-              </div>
+              {/* First attempt with Chart.js */}
+              {(chartJsWorks === null || chartJsWorks === true) && (
+                <div 
+                  ref={chartJsContainerRef}
+                  style={{ 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100%', 
+                    height: '100%', 
+                    zIndex: chartJsWorks ? 2 : 1 
+                  }}
+                >
+                  <Line data={formatChartData()} options={options} />
+                </div>
+              )}
               
-              {/* Actual Chart.js component */}
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2 }}>
-                <Line data={formatChartData()} options={options} />
-              </div>
+              {/* SVG Fallback if Chart.js fails or is still loading */}
+              {(chartJsWorks === false || chartJsWorks === null) && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  width: '100%', 
+                  height: '100%',
+                  zIndex: chartJsWorks === false ? 2 : 1
+                }}>
+                  <SimpleFallbackChart data={historicalData.data} />
+                </div>
+              )}
             </div>
           </>
         )}
